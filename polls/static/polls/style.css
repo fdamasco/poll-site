@@ -1,0 +1,22 @@
+ul {
+
+   text-align: center;
+   list-style: none;
+   padding: 100px;
+   font-family: arial;
+   font-size: 1.5rem;
+
+}
+
+li a {
+
+    color: white;
+
+
+}
+
+body {
+    background: white url("images/background.jpeg");
+    background-position: top-center;
+    background-size: cover;
+}
