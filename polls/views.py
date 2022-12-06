@@ -1,10 +1,16 @@
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse, reverse_lazy
+from datetime import datetime
+from .forms import QuestionForm
+
 from django.views import generic
+from django.views.generic import CreateView
 from django.utils import timezone
 
+
 from .models import Choice, Question
+
 
 
 class IndexView(generic.ListView):
@@ -13,8 +19,9 @@ class IndexView(generic.ListView):
 
     def get_queryset(self):
         """Return the last five published questions."""
-        return Question.objects.order_by('-pub_date')[:5]
-
+        return Question.objects.filter(
+            visible=True
+        ).order_by('pub_date')
 
 def get_queryset(self):
     """
@@ -23,17 +30,40 @@ def get_queryset(self):
     """
     return Question.objects.filter(
         pub_date__lte=timezone.now()
-    ).order_by('-pub_date')[:5]
+    ).order_by('-pub_date')
+
+
+def createQuestion(request):
+    if request.method == "POST":
+        form = QuestionForm(request.POST)
+
+        if form.is_valid():
+            polls = form.save(commit=False)
+            polls.done = 'doing'
+            polls.save()
+            return HttpResponseRedirect("/")
+            #return redirect('/')
+            #return render(request, 'polls/index')
+
+    else:
+        form = QuestionForm()
+        return render(request, 'polls/question_create.html', {'form': form})
+
+
+# class QuestionCreate(CreateView):
+#     model = Question
+#     fields = ('question_text', 'limit_date',)
+#     success_url = reverse_lazy('polls/')
 
 
 class DetailView(generic.DetailView):
     model = Question
     template_name = 'polls/detail.html'
+    extra_context = {'now': timezone.now}
 
     def get_queryset(self):
-        """
-        Excludes any questions that aren't published yet.
-        """
+        if timezone.now() > timezone.make_aware(datetime(2022, 12, 18)):
+            return Question.objects.none()
         return Question.objects.filter(pub_date__lte=timezone.now())
 
 
@@ -59,4 +89,8 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
+
+
+
+
 
